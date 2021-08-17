@@ -102,10 +102,10 @@ python main_discover.py --dataset ImageNet --gpus 2 --num_workers 8 --distribute
 
 # Citation
 ```
-@inproceedings{fini2021unified,
-    author= {Enrico Fini and Enver Sangineto and Stéphane Lathuilière and Zhun Zhong and Moin Nabi and Elisa Ricci},
-    title={A Unified Objective for Novel Class Discovery},
-    booktitle={ICCV},
-    year={2021}
+@InProceedings{fini2021unified,
+    author    = {Fini, Enrico and Sangineto, Enver and Lathuilière, Stéphane and Zhong, Zhun and Nabi, Moin and Ricci, Elisa},
+    title     = {A Unified Objective for Novel Class Discovery},
+    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
+    year      = {2021}
 }
 ```

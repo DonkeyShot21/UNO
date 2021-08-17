@@ -17,6 +17,7 @@ from datetime import datetime
 
 parser = ArgumentParser()
 parser.add_argument("--dataset", default="CIFAR100", type=str, help="dataset")
+parser.add_argument("--imagenet_split", default="A", type=str, help="imagenet split [A,B,C]")
 parser.add_argument("--download", default=False, action="store_true", help="wether to download")
 parser.add_argument("--data_dir", default="datasets", type=str, help="data directory")
 parser.add_argument("--log_dir", default="logs", type=str, help="log directory")
@@ -44,7 +45,6 @@ parser.add_argument("--offline", default=False, action="store_true", help="disab
 parser.add_argument("--num_labeled_classes", default=80, type=int, help="number of labeled classes")
 parser.add_argument("--num_unlabeled_classes", default=20, type=int, help="number of unlab classes")
 parser.add_argument("--pretrained", type=str, help="pretrained checkpoint path")
-parser.add_argument("--mixup", default=False, action="store_true", help="enable mixup")
 
 
 class Discoverer(pl.LightningModule):

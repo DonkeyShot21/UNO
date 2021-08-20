@@ -4,7 +4,7 @@ This is the official repository for the paper:
 > [Enrico Fini](https://scholar.google.com/citations?user=OQMtSKIAAAAJ&hl=en), [Enver Sangineto](https://scholar.google.com/citations?user=eJZlvlAAAAAJ&hl=en) [Stéphane Lathuilière](https://scholar.google.com/citations?user=xllguWMAAAAJ&hl=en), [Zhun Zhong](https://scholar.google.com/citations?user=nZizkQ0AAAAJ&hl=en) [Moin Nabi](https://scholar.google.com/citations?user=31seHAMAAAAJ&hl=en), [Elisa Ricci](https://scholar.google.com/citations?user=xf1T870AAAAJ&hl=en)<br>
 > **ICCV 2021 (Oral)**
 
-> Paper: [ArXiv](https://arxiv.org/)<br>
+> Paper: [ArXiv](https://arxiv.org/abs/2108.08536)<br>
 > Project Page: [Website](https://ncd-uno.github.io/)
 
 > **Abstract:** *In this paper, we study the problem of Novel Class Discovery (NCD). NCD aims at inferring novel object categories in an unlabeled set by leveraging from prior knowledge of a labeled set containing different, but related classes. Existing approaches tackle this problem by considering multiple objective functions, usually involving specialized loss terms for the labeled and the unlabeled samples respectively, and often requiring auxiliary regularization terms. In this paper we depart from this traditional scheme and introduce a UNified Objective function (UNO) for discovering novel classes, with the explicit purpose of favoring synergy between supervised and unsupervised learning. Using a multi-view self-labeling strategy, we generate pseudo-labels that can be treated homogeneously with ground truth labels. This leads to a single classification objective operating on both known and unknown classes. Despite its simplicity, UNO outperforms the state of the art by a significant margin on several benchmarks (+10% on CIFAR-100 and +8% on ImageNet).*
@@ -88,11 +88,11 @@ python main_discover.py --dataset CIFAR10 --gpus 1 --precision 16 --max_epochs 2
 ```
 Running discovery on CIFAR100-20 (80 labeled classes, 20 unlabeled classes):
 ```
-python main_discover.py --gpus 1 --dataset CIFAR100 --max_epochs 200 --batch_size 256 --num_labeled_classes 80 --num_unlabeled_classes 20 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-80_20.cp --num_heads 4 --comment 80_20 --precision 16
+python main_discover.py --dataset CIFAR100 --gpus 1 --max_epochs 200 --batch_size 256 --num_labeled_classes 80 --num_unlabeled_classes 20 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-80_20.cp --num_heads 4 --comment 80_20 --precision 16
 ```
 Running discovery on CIFAR100-50 (50 labeled classes, 50 unlabeled classes):
 ```
-main_discover.py --gpus 1 --dataset CIFAR100 --max_epochs 200 --batch_size 256 --num_labeled_classes 50 --num_unlabeled_classes 50 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-50_50.cp --num_heads 4 --comment 50_50 --precision 16
+python main_discover.py --dataset CIFAR100 --gpus 1 --max_epochs 200 --batch_size 256 --num_labeled_classes 50 --num_unlabeled_classes 50 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-50_50.cp --num_heads 4 --comment 50_50 --precision 16
 ```
 Running discovery on ImageNet (882 labeled classes, 30 unlabeled classes)
 ```
@@ -101,6 +101,7 @@ python main_discover.py --dataset ImageNet --gpus 2 --num_workers 8 --distribute
 **NOTE**: to run ImageNet split `B`/`C` just pass `--imagenet_split B/C`.
 
 # Citation
+If you like our work, please cite our [paper](https://arxiv.org/abs/2108.08536):
 ```
 @InProceedings{fini2021unified,
     author    = {Fini, Enrico and Sangineto, Enver and Lathuilière, Stéphane and Zhong, Zhun and Nabi, Moin and Ricci, Elisa},

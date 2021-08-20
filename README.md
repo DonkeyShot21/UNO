@@ -78,7 +78,7 @@ python main_pretrain.py --dataset CIFAR100 --gpus 1 --precision 16 --max_epochs 
 ```
 Running pretraining on ImageNet (882 labeled classes):
 ```
-python main_pretrain.py --gpus 2 --num_workers 8 --distributed_backend ddp --sync_batchnorm --precision 16 --dataset ImageNet --data_dir path/to/imagenet --max_epochs 100 --warmup_epochs 5 --batch_size 256 --num_labeled_classes 882 --num_unlabeled_classes 30 --comment 882_30
+python main_pretrain.py --gpus 2 --num_workers 8 --distributed_backend ddp --sync_batchnorm --precision 16 --dataset ImageNet --data_dir PATH/TO/IMAGENET --max_epochs 100 --warmup_epochs 5 --batch_size 256 --num_labeled_classes 882 --num_unlabeled_classes 30 --comment 882_30
 ```
 
 ### Discovery

@@ -34,13 +34,12 @@ conda install pytorch==1.7.1 torchvision==0.8.2 cudatoolkit=XX.X -c pytorch
 pip install pytorch-lightning==1.1.3 lightning-bolts==0.3.0 wandb sklearn
 mkdir -p logs/wandb checkpoints
 ```
-**NOTE**: make sure you install the versions of the packages that are listed in the commands, otherwise you might fail in reproducing the results.
-
 Select the appropriate `cudatoolkit` version according to your system. Optionally, you can also replace `pillow` with [`pillow-simd`](https://github.com/uploadcare/pillow-simd) (if your machine supports it) for faster data loading:
 ```
 pip uninstall pillow
 CC="cc -mavx2" pip install -U --force-reinstall pillow-simd
 ```
+**NOTE**: make sure you install the versions of the packages that are listed in the commands, otherwise you might fail in reproducing the results.
 
 # Datasets
 For CIFAR10 and CIFAR100 you can just pass `--download` and the datasets will be automatically downloaded in the directory specified with `--data_dir YOUR_DATA_DIR`.

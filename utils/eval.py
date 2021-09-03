@@ -45,7 +45,6 @@ class ClusterMetrics(Metric):
         self.targets.append(targets)
 
     def compute(self):
-        # if isinstance(self.preds, list):
         preds = torch.cat(self.preds, dim=-1)
         targets = torch.cat(self.targets)
         targets -= targets.min()

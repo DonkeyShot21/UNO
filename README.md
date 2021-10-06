@@ -39,6 +39,7 @@ With these improvements we could drastically increase the clustering accuracy:
 | NCL        |     86.6    |      -      |
 | UNO        |     85.0    |     52.9    |
 | UNO v2     |     **90.6**    |     **60.8**    |
+
 We are also rerunning ImageNet, the results will be posted later.
 
 # Installation

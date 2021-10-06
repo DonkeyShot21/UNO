@@ -3,7 +3,7 @@ import torchvision
 import pytorch_lightning as pl
 
 from utils.transforms import get_transforms
-from utils.transforms import DiscoveryTargetTransform
+from utils.transforms import DiscoverTargetTransform
 
 import numpy as np
 import os
@@ -32,8 +32,8 @@ class PretrainCIFARDataModule(pl.LightningDataModule):
         self.num_labeled_classes = args.num_labeled_classes
         self.num_unlabeled_classes = args.num_unlabeled_classes
         self.dataset_class = getattr(torchvision.datasets, args.dataset)
-        self.transform_train = get_transforms("unsupervised", args.dataset, args.num_views)
-        self.transform_val = get_transforms("eval", args.dataset, args.num_views)
+        self.transform_train = get_transforms("unsupervised", args.dataset)
+        self.transform_val = get_transforms("eval", args.dataset)
 
     def prepare_data(self):
         self.dataset_class(self.data_dir, train=True, download=self.download)
@@ -89,8 +89,14 @@ class DiscoverCIFARDataModule(pl.LightningDataModule):
         self.num_labeled_classes = args.num_labeled_classes
         self.num_unlabeled_classes = args.num_unlabeled_classes
         self.dataset_class = getattr(torchvision.datasets, args.dataset)
-        self.transform_train = get_transforms("unsupervised", args.dataset, args.num_views)
-        self.transform_val = get_transforms("eval", args.dataset, args.num_views)
+        self.transform_train = get_transforms(
+            "unsupervised",
+            args.dataset,
+            multicrop=args.multicrop,
+            num_large_crops=args.num_large_crops,
+            num_small_crops=args.num_small_crops,
+        )
+        self.transform_val = get_transforms("eval", args.dataset)
 
     def prepare_data(self):
         self.dataset_class(self.data_dir, train=True, download=self.download)
@@ -381,7 +387,7 @@ IMAGENET_CLASSES_30 = {
 }
 
 
-class DiscoveryDataset:
+class DiscoverDataset:
     def __init__(self, labeled_dataset, unlabeled_dataset):
         self.labeled_dataset = labeled_dataset
         self.unlabeled_dataset = unlabeled_dataset
@@ -405,8 +411,14 @@ class DiscoverImageNetDataModule(pl.LightningDataModule):
         self.num_workers = args.num_workers
         self.imagenet_split = args.imagenet_split
         self.dataset_class = torchvision.datasets.ImageFolder
-        self.transform_train = get_transforms("unsupervised", args.dataset, args.num_views)
-        self.transform_val = get_transforms("eval", args.dataset, args.num_views)
+        self.transform_train = get_transforms(
+            "unsupervised",
+            args.dataset,
+            multicrop=args.multicrop,
+            num_large_crops=args.num_large_crops,
+            num_small_crops=args.num_small_crops,
+        )
+        self.transform_val = get_transforms("eval", args.dataset)
 
     def prepare_data(self):
         pass
@@ -429,7 +441,7 @@ class DiscoverImageNetDataModule(pl.LightningDataModule):
 
         # target transform
         all_classes = labeled_classes + unlabeled_classes
-        target_transform = DiscoveryTargetTransform(
+        target_transform = DiscoverTargetTransform(
             {mapping[c]: i for i, c in enumerate(all_classes)}
         )
         train_dataset.target_transform = target_transform
@@ -440,7 +452,7 @@ class DiscoverImageNetDataModule(pl.LightningDataModule):
         labeled_subset = torch.utils.data.Subset(train_dataset, labeled_idxs)
         unlabeled_idxs = np.where(np.isin(targets, np.array(unlabeled_class_idxs)))[0]
         unlabeled_subset = torch.utils.data.Subset(train_dataset, unlabeled_idxs)
-        self.train_dataset = DiscoveryDataset(labeled_subset, unlabeled_subset)
+        self.train_dataset = DiscoverDataset(labeled_subset, unlabeled_subset)
 
         # val datasets
         val_dataset_train = self.dataset_class(
@@ -498,8 +510,8 @@ class PretrainImageNetDataModule(pl.LightningDataModule):
         self.batch_size = args.batch_size
         self.num_workers = args.num_workers
         self.dataset_class = torchvision.datasets.ImageFolder
-        self.transform_train = get_transforms("unsupervised", args.dataset, args.num_views)
-        self.transform_val = get_transforms("eval", args.dataset, args.num_views)
+        self.transform_train = get_transforms("unsupervised", args.dataset)
+        self.transform_val = get_transforms("eval", args.dataset)
 
     def prepare_data(self):
         pass
@@ -518,7 +530,7 @@ class PretrainImageNetDataModule(pl.LightningDataModule):
         labeled_class_idxs = [mapping[c] for c in labeled_classes]
 
         # target transform
-        target_transform = DiscoveryTargetTransform(
+        target_transform = DiscoverTargetTransform(
             {mapping[c]: i for i, c in enumerate(labeled_classes)}
         )
         train_dataset.target_transform = target_transform

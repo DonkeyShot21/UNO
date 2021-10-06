@@ -24,6 +24,22 @@ This is the official repository for the paper:
 </p>
 <br>
 
+# News
+**[Oct 6 2021]** A new version of UNO is available in this repository (UNO v2), with the following changes:
+* Improved transformations (similar to [this repository](https://github.com/facebookresearch/suncet))
+* Added multi-crop
+* Noticed longer training increases performance
+* Bugfix (thanks to [DeepTecher](https://github.com/DeepTecher))
+
+With these improvements we could drastically increase the clustering accuracy:
+| Method     | CIFAR100-20 | CIFAR100-50 |
+|------------|:-----------:|:-----------:|
+| RS+        |     75.2    |     44.1    |
+| Jia et al. |     76.4    |      -      |
+| NCL        |     86.6    |      -      |
+| UNO        |     85.0    |     52.9    |
+| UNO v2     |     **90.6**    |     **60.8**    |
+We are also rerunning ImageNet, the results will be posted later.
 
 # Installation
 Our implementation is based on [PyTorch](https://pytorch.org) and  [PyTorch Lightning](https://www.pytorchlightning.ai/). Logging is performed using [Wandb](https://wandb.ai/site). We recommend using `conda` to create the environment and install dependencies:
@@ -72,7 +88,6 @@ Running pretraining on CIFAR100-80 (80 labeled classes):
 ```
 python main_pretrain.py --dataset CIFAR100 --gpus 1 --precision 16 --max_epochs 200 --batch_size 256 --num_labeled_classes 80 --num_unlabeled_classes 20 --comment 80_20
 ```
-
 Running pretraining on CIFAR100-50 (50 labeled classes):
 ```
 python main_pretrain.py --dataset CIFAR100 --gpus 1 --precision 16 --max_epochs 200 --batch_size 256 --num_labeled_classes 50 --num_unlabeled_classes 50 --comment 50_50
@@ -85,19 +100,19 @@ python main_pretrain.py --gpus 2 --num_workers 8 --distributed_backend ddp --syn
 ### Discovery
 Running discovery on CIFAR10 (5 labeled classes, 5 unlabeled classes):
 ```
-python main_discover.py --dataset CIFAR10 --gpus 1 --precision 16 --max_epochs 200 --batch_size 256 --num_labeled_classes 5 --num_unlabeled_classes 5 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR10.cp --num_heads 4 --comment 5_5
+python main_discover.py --dataset CIFAR10 --gpus 1 --max_epochs 500 --batch_size 512 --num_labeled_classes 5 --num_unlabeled_classes 5 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR10.cp --num_heads 4 --comment 5_5 --precision 16 --multicrop --overcluster_factor 10
 ```
 Running discovery on CIFAR100-20 (80 labeled classes, 20 unlabeled classes):
 ```
-python main_discover.py --dataset CIFAR100 --gpus 1 --max_epochs 200 --batch_size 256 --num_labeled_classes 80 --num_unlabeled_classes 20 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-80_20.cp --num_heads 4 --comment 80_20 --precision 16
+python main_discover.py --dataset CIFAR100 --gpus 1 --max_epochs 500 --batch_size 512 --num_labeled_classes 80 --num_unlabeled_classes 20 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-80_20.cp --num_heads 4 --comment 80_20 --precision 16 --multicrop --overcluster_factor 5
 ```
 Running discovery on CIFAR100-50 (50 labeled classes, 50 unlabeled classes):
 ```
-python main_discover.py --dataset CIFAR100 --gpus 1 --max_epochs 200 --batch_size 256 --num_labeled_classes 50 --num_unlabeled_classes 50 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-50_50.cp --num_heads 4 --comment 50_50 --precision 16
+python main_discover.py --dataset CIFAR100 --gpus 1 --max_epochs 500 --batch_size 512 --num_labeled_classes 50 --num_unlabeled_classes 50 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-CIFAR100-50_50.cp --num_heads 4 --comment 50_50 --precision 16 --multicrop
 ```
 Running discovery on ImageNet (882 labeled classes, 30 unlabeled classes)
 ```
-python main_discover.py --dataset ImageNet --gpus 2 --num_workers 8 --distributed_backend ddp --sync_batchnorm --precision 16  --data_dir PATH/TO/IMAGENET --max_epochs 60 --base_lr 0.02 --warmup_epochs 5 --batch_size 256 --num_labeled_classes 882 --num_unlabeled_classes 30 --num_heads 3 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-ImageNet.cp --imagenet_split A --comment 882_30-A
+python main_discover.py --dataset ImageNet --gpus 2 --distributed_backend ddp --sync_batchnorm --precision 16 --data_dir PATH/TO/IMAGENET --max_epochs 60 --base_lr 0.2 --warmup_epochs 5 --batch_size 256 --num_labeled_classes 882 --num_unlabeled_classes 30 --num_heads 4 --pretrained PATH/TO/CHECKPOINTS/pretrain-resnet18-ImageNet.cp --imagenet_split A --comment 882_30-A --overcluster_factor 4 --multicrop
 ```
 **NOTE**: to run ImageNet split `B`/`C` just pass `--imagenet_split B/C`.
 

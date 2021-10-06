@@ -22,12 +22,12 @@ parser.add_argument("--download", default=False, action="store_true", help="weth
 parser.add_argument("--data_dir", default="datasets", type=str, help="data directory")
 parser.add_argument("--log_dir", default="logs", type=str, help="log directory")
 parser.add_argument("--batch_size", default=256, type=int, help="batch size")
-parser.add_argument("--num_workers", default=5, type=int, help="number of workers")
+parser.add_argument("--num_workers", default=10, type=int, help="number of workers")
 parser.add_argument("--arch", default="resnet18", type=str, help="backbone architecture")
-parser.add_argument("--base_lr", default=0.1, type=float, help="learning rate")
+parser.add_argument("--base_lr", default=0.4, type=float, help="learning rate")
 parser.add_argument("--min_lr", default=0.001, type=float, help="min learning rate")
 parser.add_argument("--momentum_opt", default=0.9, type=float, help="momentum for optimizer")
-parser.add_argument("--weight_decay_opt", default=1.0e-4, type=float, help="weight decay")
+parser.add_argument("--weight_decay_opt", default=1.5e-4, type=float, help="weight decay")
 parser.add_argument("--warmup_epochs", default=10, type=int, help="warmup epochs")
 parser.add_argument("--proj_dim", default=256, type=int, help="projected dim")
 parser.add_argument("--hidden_dim", default=2048, type=int, help="hidden dim in proj/pred head")
@@ -36,7 +36,6 @@ parser.add_argument("--num_heads", default=5, type=int, help="number of heads fo
 parser.add_argument("--num_hidden_layers", default=1, type=int, help="number of hidden layers")
 parser.add_argument("--num_iters_sk", default=3, type=int, help="number of iters for Sinkhorn")
 parser.add_argument("--epsilon_sk", default=0.05, type=float, help="epsilon for the Sinkhorn")
-parser.add_argument("--num_views", default=2, type=int, help="number of views")
 parser.add_argument("--temperature", default=0.1, type=float, help="softmax temperature")
 parser.add_argument("--comment", default=datetime.now().strftime("%b%d_%H-%M-%S"), type=str)
 parser.add_argument("--project", default="UNO", type=str, help="wandb project")
@@ -45,6 +44,9 @@ parser.add_argument("--offline", default=False, action="store_true", help="disab
 parser.add_argument("--num_labeled_classes", default=80, type=int, help="number of labeled classes")
 parser.add_argument("--num_unlabeled_classes", default=20, type=int, help="number of unlab classes")
 parser.add_argument("--pretrained", type=str, help="pretrained checkpoint path")
+parser.add_argument("--multicrop", default=False, action="store_true", help="activates multicrop")
+parser.add_argument("--num_large_crops", default=2, type=int, help="number of large crops")
+parser.add_argument("--num_small_crops", default=2, type=int, help="number of small crops")
 
 
 class Discoverer(pl.LightningModule):
@@ -65,7 +67,7 @@ class Discoverer(pl.LightningModule):
             num_hidden_layers=self.hparams.num_hidden_layers,
         )
 
-        state_dict = torch.load(self.hparams.pretrained)
+        state_dict = torch.load(self.hparams.pretrained, map_location=self.device)
         state_dict = {k: v for k, v in state_dict.items() if ("unlab" not in k)}
         self.model.load_state_dict(state_dict, strict=False)
 
@@ -110,15 +112,15 @@ class Discoverer(pl.LightningModule):
         return [optimizer], [scheduler]
 
     def cross_entropy_loss(self, preds, targets):
-        preds = F.log_softmax(preds / self.hparams.temperature, dim=1)
-        return -torch.mean(torch.sum(targets * preds, dim=1))
+        preds = F.log_softmax(preds / self.hparams.temperature, dim=-1)
+        return -torch.mean(torch.sum(targets * preds, dim=-1))
 
     def swapped_prediction(self, logits, targets):
         loss = 0
-        for view in range(self.hparams.num_views):
-            for other_view in np.delete(range(self.hparams.num_views), view):
+        for view in range(self.hparams.num_large_crops):
+            for other_view in np.delete(range(self.hparams.num_crops), view):
                 loss += self.cross_entropy_loss(logits[other_view], targets[view])
-        return loss / (self.hparams.num_views * (self.hparams.num_views - 1))
+        return loss / (self.hparams.num_large_crops * (self.hparams.num_crops - 1))
 
     def forward(self, x):
         return self.model(x)
@@ -136,7 +138,7 @@ class Discoverer(pl.LightningModule):
         mask_lab = labels < self.hparams.num_labeled_classes
         return views, labels, mask_lab
 
-    def training_step(self, batch, idx):
+    def training_step(self, batch, _):
         views, labels, mask_lab = self.unpack_batch(batch)
         nlc = self.hparams.num_labeled_classes
 
@@ -163,7 +165,7 @@ class Discoverer(pl.LightningModule):
         targets_over = torch.zeros_like(logits_over)
 
         # generate pseudo-labels with sinkhorn-knopp and fill unlab targets
-        for v in range(self.hparams.num_views):
+        for v in range(self.hparams.num_large_crops):
             for h in range(self.hparams.num_heads):
                 targets[v, h, mask_lab, :nlc] = targets_lab.type_as(targets)
                 targets_over[v, h, mask_lab, :nlc] = targets_lab.type_as(targets)
@@ -175,15 +177,11 @@ class Discoverer(pl.LightningModule):
                 ).type_as(targets)
 
         # compute swapped prediction loss
-        loss_cluster, loss_overcluster = [], []
-        for h in range(self.hparams.num_heads):
-            loss_cluster.append(self.swapped_prediction(logits, targets))
-            loss_overcluster.append(self.swapped_prediction(logits_over, targets_over))
+        loss_cluster = self.swapped_prediction(logits, targets)
+        loss_overcluster = self.swapped_prediction(logits_over, targets_over)
 
         # total loss
-        loss_cluster = torch.stack(loss_cluster)
-        loss_overcluster = torch.stack(loss_overcluster)
-        loss = (loss_cluster + loss_overcluster).mean()
+        loss = (loss_cluster + loss_overcluster) / 2
 
         # update best head tracker
         self.loss_per_head += loss_cluster.clone().detach()
@@ -272,5 +270,9 @@ if __name__ == "__main__":
     parser = pl.Trainer.add_argparse_args(parser)
     args = parser.parse_args()
     args.num_classes = args.num_labeled_classes + args.num_unlabeled_classes
+
+    if not args.multicrop:
+        args.num_small_crops = 0
+    args.num_crops = args.num_large_crops + args.num_small_crops
 
     main(args)

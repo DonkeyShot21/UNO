@@ -26,7 +26,7 @@ This is the official repository for the paper:
 
 # News
 **[Oct 6 2021]** A new version of UNO is available in this repository (UNO v2), with the following changes:
-* Improved transformations (similar to [this repository](https://github.com/facebookresearch/suncet))
+* Improved augmentations (similar to [this repository](https://github.com/facebookresearch/suncet))
 * Added multi-crop
 * Noticed longer training increases performance
 * Bugfix (thanks to [DeepTecher](https://github.com/DeepTecher))

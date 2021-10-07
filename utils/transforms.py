@@ -1,10 +1,11 @@
-import torchvision.transforms as transforms
+import torch
+import torchvision.transforms as T
 
-from PIL import ImageFilter
+from PIL import ImageFilter, ImageOps
 import random
 
 
-class DiscoveryTargetTransform:
+class DiscoverTargetTransform:
     def __init__(self, mapping):
         self.mapping = mapping
 
@@ -25,16 +26,65 @@ class GaussianBlur(object):
         return x
 
 
+class Solarize(object):
+    def __init__(self, p=0.2):
+        self.prob = p
+
+    def __call__(self, img):
+        if torch.bernoulli(torch.tensor(self.prob)) == 0:
+            return img
+
+        v = torch.rand(1) * 256
+        return ImageOps.solarize(img, v)
+
+
+class Equalize(object):
+    def __init__(self, p=0.2):
+        self.prob = p
+
+    def __call__(self, img):
+        if torch.bernoulli(torch.tensor(self.prob)) == 0:
+            return img
+
+        return ImageOps.equalize(img)
+
+
+def get_multicrop_transform(dataset, mean, std):
+    if dataset == "ImageNet":
+        return T.Compose(
+            [
+                T.RandomResizedCrop(size=96, scale=(0.08, 0.5)),
+                T.RandomHorizontalFlip(),
+                T.RandomApply([T.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
+                T.RandomGrayscale(p=0.2),
+                T.RandomApply([GaussianBlur([0.1, 2.0])], p=0.5),
+                T.ToTensor(),
+                T.Normalize(mean, std),
+            ]
+        )
+    elif "CIFAR" in dataset:
+        return T.Compose(
+            [
+                T.RandomResizedCrop(size=18, scale=(0.3, 0.8)),
+                T.RandomHorizontalFlip(),
+                T.RandomApply([T.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.8),
+                Solarize(p=0.2),
+                Equalize(p=0.2),
+                T.ToTensor(),
+                T.Normalize(mean, std),
+            ]
+        )
+
+
 class MultiTransform:
-    def __init__(self, times, transform):
-        self.times = times
-        self.transform = transform
+    def __init__(self, transforms):
+        self.transforms = transforms
 
     def __call__(self, x):
-        return [self.transform(x) for _ in range(self.times)]
+        return [t(x) for t in self.transforms]
 
 
-def get_transforms(mode, dataset, num_views=None):
+def get_transforms(mode, dataset, multicrop=False, num_large_crops=2, num_small_crops=2):
 
     mean, std = {
         "CIFAR10": [(0.491, 0.482, 0.447), (0.202, 0.199, 0.201)],
@@ -44,105 +94,99 @@ def get_transforms(mode, dataset, num_views=None):
 
     transform = {
         "ImageNet": {
-            "unsupervised": MultiTransform(
-                num_views,
-                transforms.Compose(
-                    [
-                        transforms.RandomResizedCrop(224, (0.5, 1.0)),
-                        transforms.RandomHorizontalFlip(),
-                        transforms.RandomApply(
-                            [transforms.ColorJitter(0.3, 0.3, 0.15, 0.1)], p=0.5
-                        ),
-                        transforms.RandomGrayscale(p=0.1),
-                        transforms.RandomApply([GaussianBlur([0.1, 2.0])], p=0.2),
-                        transforms.ToTensor(),
-                        transforms.Normalize(mean, std),
-                    ]
-                ),
-            ),
-            "eval": transforms.Compose(
+            "unsupervised": T.Compose(
                 [
-                    transforms.Resize(256),
-                    transforms.CenterCrop(224),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean, std),
+                    T.RandomResizedCrop(224, (0.5, 1.0)),
+                    T.RandomHorizontalFlip(),
+                    T.RandomApply([T.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.5),
+                    T.RandomGrayscale(p=0.2),
+                    T.RandomApply([GaussianBlur([0.1, 2.0])], p=0.2),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
+                ]
+            ),
+            "eval": T.Compose(
+                [
+                    T.Resize(256),
+                    T.CenterCrop(224),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
                 ]
             ),
         },
         "CIFAR100": {
-            "unsupervised": MultiTransform(
-                num_views,
-                transforms.Compose(
-                    [
-                        transforms.RandomChoice(
-                            [
-                                transforms.RandomCrop(32, padding=4),
-                                transforms.RandomResizedCrop(32, (0.8, 1.0)),
-                            ]
-                        ),
-                        transforms.RandomHorizontalFlip(),
-                        transforms.RandomApply(
-                            [transforms.ColorJitter(0.3, 0.3, 0.15, 0.1)], p=0.5
-                        ),
-                        transforms.RandomGrayscale(p=0.1),
-                        transforms.ToTensor(),
-                        transforms.Normalize(mean, std),
-                    ]
-                ),
-            ),
-            "supervised": transforms.Compose(
+            "unsupervised": T.Compose(
                 [
-                    transforms.RandomCrop(32, padding=4),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean, std),
+                    T.RandomChoice(
+                        [
+                            T.RandomCrop(32, padding=4),
+                            T.RandomResizedCrop(32, (0.5, 1.0)),
+                        ]
+                    ),
+                    T.RandomHorizontalFlip(),
+                    T.RandomApply([T.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.6),
+                    Solarize(p=0.1),
+                    Equalize(p=0.1),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
                 ]
             ),
-            "eval": transforms.Compose(
+            "supervised": T.Compose(
                 [
-                    transforms.CenterCrop(32),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean, std),
+                    T.RandomCrop(32, padding=4),
+                    T.RandomHorizontalFlip(),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
+                ]
+            ),
+            "eval": T.Compose(
+                [
+                    T.CenterCrop(32),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
                 ]
             ),
         },
         "CIFAR10": {
-            "unsupervised": MultiTransform(
-                num_views,
-                transforms.Compose(
-                    [
-                        transforms.RandomChoice(
-                            [
-                                transforms.RandomCrop(32, padding=4),
-                                transforms.RandomResizedCrop(32, (0.8, 1.0)),
-                            ]
-                        ),
-                        transforms.RandomHorizontalFlip(),
-                        transforms.RandomApply(
-                            [transforms.ColorJitter(0.3, 0.3, 0.15, 0.1)], p=0.5
-                        ),
-                        transforms.RandomGrayscale(p=0.1),
-                        transforms.ToTensor(),
-                        transforms.Normalize(mean, std),
-                    ]
-                ),
-            ),
-            "supervised": transforms.Compose(
+            "unsupervised": T.Compose(
                 [
-                    transforms.RandomCrop(32, padding=4),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean, std),
+                    T.RandomChoice(
+                        [
+                            T.RandomCrop(32, padding=4),
+                            T.RandomResizedCrop(32, (0.5, 1.0)),
+                        ]
+                    ),
+                    T.RandomHorizontalFlip(),
+                    T.RandomApply([T.ColorJitter(0.4, 0.4, 0.2, 0.1)], p=0.6),
+                    Solarize(p=0.1),
+                    Equalize(p=0.1),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
                 ]
             ),
-            "eval": transforms.Compose(
+            "supervised": T.Compose(
                 [
-                    transforms.CenterCrop(32),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean, std),
+                    T.RandomCrop(32, padding=4),
+                    T.RandomHorizontalFlip(),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
+                ]
+            ),
+            "eval": T.Compose(
+                [
+                    T.CenterCrop(32),
+                    T.ToTensor(),
+                    T.Normalize(mean, std),
                 ]
             ),
         },
     }[dataset][mode]
+
+    if mode == "unsupervised":
+        transforms = [transform] * num_large_crops
+        if multicrop:
+            multicrop_transform = get_multicrop_transform(dataset, mean, std)
+            transforms += [multicrop_transform] * num_small_crops
+        transform = MultiTransform(transforms)
 
     return transform

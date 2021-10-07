@@ -27,7 +27,6 @@ parser.add_argument("--min_lr", default=0.001, type=float, help="min learning ra
 parser.add_argument("--momentum_opt", default=0.9, type=float, help="momentum for optimizer")
 parser.add_argument("--weight_decay_opt", default=1.0e-4, type=float, help="weight decay")
 parser.add_argument("--warmup_epochs", default=10, type=int, help="warmup epochs")
-parser.add_argument("--num_views", default=2, type=int, help="number of views")
 parser.add_argument("--temperature", default=0.1, type=float, help="softmax temperature")
 parser.add_argument("--comment", default=datetime.now().strftime("%b%d_%H-%M-%S"), type=str)
 parser.add_argument("--project", default="UNO", type=str, help="wandb project")

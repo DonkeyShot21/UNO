@@ -113,7 +113,7 @@ class Discoverer(pl.LightningModule):
 
     def cross_entropy_loss(self, preds, targets):
         preds = F.log_softmax(preds / self.hparams.temperature, dim=-1)
-        return -torch.mean(torch.sum(targets * preds, dim=-1))
+        return torch.mean(-torch.sum(targets * preds, dim=-1), dim=-1)
 
     def swapped_prediction(self, logits, targets):
         loss = 0
@@ -180,11 +180,13 @@ class Discoverer(pl.LightningModule):
         loss_cluster = self.swapped_prediction(logits, targets)
         loss_overcluster = self.swapped_prediction(logits_over, targets_over)
 
-        # total loss
-        loss = (loss_cluster + loss_overcluster) / 2
-
         # update best head tracker
         self.loss_per_head += loss_cluster.clone().detach()
+
+        # total loss
+        loss_cluster = loss_cluster.mean()
+        loss_overcluster = loss_overcluster.mean()
+        loss = (loss_cluster + loss_overcluster) / 2
 
         # log
         results = {

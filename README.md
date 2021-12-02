@@ -40,8 +40,6 @@ With these improvements we could drastically increase the clustering accuracy:
 | UNO        |     85.0    |     52.9    |
 | UNO v2     |     **90.6**    |     **60.8**    |
 
-We are also rerunning ImageNet, the results will be posted later.
-
 # Installation
 Our implementation is based on [PyTorch](https://pytorch.org) and  [PyTorch Lightning](https://www.pytorchlightning.ai/). Logging is performed using [Wandb](https://wandb.ai/site). We recommend using `conda` to create the environment and install dependencies:
 ```

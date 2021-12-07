@@ -74,6 +74,14 @@ Now, remove `/view?usp=sharing` and replace `file/d/` with `uc?id=`. Finally, do
 gdown https://drive.google.com/uc?id=1Pa3qgHwK_1JkA-k492gAjWPM5AW76-rl
 ```
 
+To help you out, we have ready-to-run commands to download the models here (if the Google Drive token changes, you can refer above to see how to create these links):
+```
+gdown https://drive.google.com/uc?id=1Pa3qgHwK_1JkA-k492gAjWPM5AW76-rl
+gdown https://drive.google.com/uc?id=1b81XTMU93Qat5inHeva4R8_GCdaJ3lGr
+gdown https://drive.google.com/uc?id=1PZcvIZw0VpEKQQdw3zmR6vC-OWX2LMqI
+gdown https://drive.google.com/uc?id=1MKl9g-BAfrroC7zTAhJuW2LQ0Wo8KBF8
+```
+
 # Logging
 Logging is performed with [Wandb](https://wandb.ai/site). Please create an account and specify your `--entity YOUR_ENTITY` and `--project YOUR_PROJECT`. For debugging, or if you do not want all the perks of Wandb, you can disable logging by passing `--offline`.
 

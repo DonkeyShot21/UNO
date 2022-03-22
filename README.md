@@ -1,7 +1,7 @@
 # A Unified Objective for Novel Class Discovery
 This is the official repository for the paper:
 > **A Unified Objective for Novel Class Discovery**<br>
-> [Enrico Fini](https://scholar.google.com/citations?user=OQMtSKIAAAAJ&hl=en), [Enver Sangineto](https://scholar.google.com/citations?user=eJZlvlAAAAAJ&hl=en) [Stéphane Lathuilière](https://scholar.google.com/citations?user=xllguWMAAAAJ&hl=en), [Zhun Zhong](https://scholar.google.com/citations?user=nZizkQ0AAAAJ&hl=en) [Moin Nabi](https://scholar.google.com/citations?user=31seHAMAAAAJ&hl=en), [Elisa Ricci](https://scholar.google.com/citations?user=xf1T870AAAAJ&hl=en)<br>
+> [Enrico Fini](https://scholar.google.com/citations?user=OQMtSKIAAAAJ&hl=en), [Enver Sangineto](https://scholar.google.com/citations?user=eJZlvlAAAAAJ&hl=en), [Stéphane Lathuilière](https://scholar.google.com/citations?user=xllguWMAAAAJ&hl=en), [Zhun Zhong](https://scholar.google.com/citations?user=nZizkQ0AAAAJ&hl=en), [Moin Nabi](https://scholar.google.com/citations?user=31seHAMAAAAJ&hl=en), [Elisa Ricci](https://scholar.google.com/citations?user=xf1T870AAAAJ&hl=en)<br>
 > **ICCV 2021 (Oral)**
 
 > Paper: [ArXiv](https://arxiv.org/abs/2108.08536)<br>
